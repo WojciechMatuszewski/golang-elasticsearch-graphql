@@ -1,0 +1,39 @@
+service: elasticsearch-golang
+
+provider:
+    name: aws
+    region: eu-central-1
+    runtime: go1.x
+
+custom:
+    TODO_TABLE: ${self:service}-todo-table
+
+plugins:
+    - serverless-go-plugin
+
+
+functions:
+    graphql:
+        iamRoleStatementsName: ${self:service}-graphql-lambda
+        iamRoleStatements:
+            - Effect: Allow
+              Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+              Resource:
+                  - !GetAtt [TodoTable, "Arn"]
+                  - !Join ["", !GetAtt [TodoTable, "Arn"], "/*"]
+        environment:
+            TODO_TABLE: ${self:custom.TODO_TABLE}
+        handler: ./functions/graphql
+        package:
+            include:
+                - ./schema.graphql
+        events:
+            - http:
+                  path: graphql
+                  method: POST
+
+
+resources:
+    - ${file(resources/dynamo.yml)}
