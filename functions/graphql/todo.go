@@ -20,6 +20,7 @@ func (r *RootResolver) CreateTodo(args struct{ Input CreateTodoInput }) (*TodoRe
 
 	err := r.deps.store.Save(td)
 	if err != nil {
+		return nil, err
 	}
 
 	return &TodoResolver{todo: td}, nil
@@ -29,7 +30,7 @@ func (r *RootResolver) CreateTodo(args struct{ Input CreateTodoInput }) (*TodoRe
 func (r *RootResolver) GetTodo(args struct{ ID graphql.ID }) (*TodoResolver, error) {
 	td, err := r.deps.store.GetByID(string(args.ID))
 	if err != nil {
-
+		return nil, err
 	}
 
 	return &TodoResolver{todo: td}, nil

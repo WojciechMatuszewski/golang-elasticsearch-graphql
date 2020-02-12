@@ -8,7 +8,7 @@ import (
 
 // GetFullPath returns full path for a given file regardless whats the current working directory
 func GetFullPath(fromRootPath string) (string, error) {
-	const rootF = "elastic-search"
+	const rootF = "golang-elasticsearch-graphql"
 	const maxSteps = 10
 
 	wd, err := os.Getwd()
