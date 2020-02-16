@@ -6,6 +6,18 @@ type RootResolver struct {
 	deps *deps
 }
 
-type deps struct {
-	store todo.StoreIface
+// StoreIface is a interface which represents the store
+type StoreIface interface {
+	Save(todo todo.Todo) error
+	GetByID(ID string) (todo.Todo, error)
 }
+
+
+type deps struct {
+	store StoreIface
+}
+
+
+
+
+

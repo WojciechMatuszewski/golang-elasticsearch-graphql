@@ -1,2 +1,2 @@
-//go:generate mockgen -destination=graphql.go  -package=mock elastic-search/pkg/todo StoreIface
+//go:generate mockgen -destination=graphql.go  -source=../root.go -package=mock
 package mock

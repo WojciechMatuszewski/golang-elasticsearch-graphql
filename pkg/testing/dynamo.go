@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/awslabs/goformation/v4"
 	cfDynamo "github.com/awslabs/goformation/v4/cloudformation/dynamodb"
@@ -16,7 +14,7 @@ import (
 func SetupDynamoTest(t *testing.T, prefix string) *dynamodb.DynamoDB {
 	t.Helper()
 
-	db := dynamodb.New(localSession(), &aws.Config{Endpoint: aws.String("http://localhost:8000")})
+	db := dynamodb.New(LocalSession(), &aws.Config{Endpoint: aws.String("http://localhost:8000")})
 	tables := getDynamoTablesSchema()
 
 	for _, table := range tables {
@@ -38,18 +36,6 @@ func SetupDynamoTest(t *testing.T, prefix string) *dynamodb.DynamoDB {
 	}
 
 	return db
-}
-
-func localSession() *session.Session {
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("local"),
-		Credentials: credentials.NewStaticCredentials("local", "local", "local"),
-	})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	return sess
 }
 
 func getDynamoTablesSchema() map[string]*cfDynamo.Table {

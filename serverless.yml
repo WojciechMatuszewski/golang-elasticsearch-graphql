@@ -1,4 +1,4 @@
-service: elasticsearch-golang
+service: elasticsearch-golang-3
 
 provider:
     name: aws
@@ -10,9 +10,27 @@ custom:
 
 plugins:
     - serverless-go-plugin
+    - serverless-iam-roles-per-function
 
 
 functions:
+    dbstream:
+        iamRoleStatementsName: ${self:service}-dbstream-lambda
+        iamRoleStatements:
+            - Effect: Allow
+              Action:
+                  - dynamodb:ListStreams
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+              Resource:
+                  - !GetAtt [TodoTable, "Arn"]
+        handler: ./functions/dbstream
+        events:
+            - stream:
+                  type: dynamodb
+                  batchSize: 1
+                  enabled: true
+                  arn: !GetAtt [TodoTable, "StreamArn"]
     graphql:
         iamRoleStatementsName: ${self:service}-graphql-lambda
         iamRoleStatements:
@@ -22,7 +40,7 @@ functions:
                   - dynamodb:PutItem
               Resource:
                   - !GetAtt [TodoTable, "Arn"]
-                  - !Join ["", !GetAtt [TodoTable, "Arn"], "/*"]
+                  - !Join ["", [!GetAtt [TodoTable, "Arn"], "/*"]]
         environment:
             TODO_TABLE: ${self:custom.TODO_TABLE}
         handler: ./functions/graphql

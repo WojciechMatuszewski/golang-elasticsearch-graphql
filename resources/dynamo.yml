@@ -2,6 +2,8 @@ Resources:
     TodoTable:
         Type: AWS::DynamoDB::Table
         Properties:
+            StreamSpecification:
+                StreamViewType: NEW_AND_OLD_IMAGES
             TableName: ${self:custom.TODO_TABLE}
             AttributeDefinitions:
                 - AttributeName: ID

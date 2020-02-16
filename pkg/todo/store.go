@@ -6,10 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-type StoreIface interface {
-	GetByID(ID string) (Todo, error)
-	Save(todo Todo) error
-}
 
 // Store represents TodoStore
 type Store struct {

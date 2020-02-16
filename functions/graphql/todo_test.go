@@ -60,28 +60,20 @@ func structToMap(i interface{}) (map[string]interface{}) {
 		}
 
 	}
-
 	return out
 }
 
 func TestRootResolver_CreateTodo(t *testing.T) {
 	t.Parallel()
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("failure on saving the todo", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store:store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps:&resolverDeps})
 
-		// what todo??
 		in := CreateTodoInput{Content:"content"}
-		td := todo.Todo{
-			// cannot use gomock.Any().String() here :C
-			ID:      gomock.Any().String(),
-			Content: in.Content,
-		}
-
-		store.EXPECT().Save(td).Return(nil)
+		store.EXPECT().Save(gomock.Any()).Return(errors.New("boom"))
 		gqltesting.RunTest(t, &gqltesting.Test{
 			Schema:         schema,
 			Query:          `
@@ -94,7 +86,40 @@ func TestRootResolver_CreateTodo(t *testing.T) {
 			Variables:      map[string]interface{}{
 				"input": structToMap(&in),
 			},
-			ExpectedResult: "",
+			ExpectedResult: `null`,
+			ExpectedErrors: []*graphqlerrors.QueryError{
+				{
+					Message:"boom",
+					Path:[]interface{}{"createTodo"},
+					ResolverError: errors.New("boom"),
+				},
+			},
+		})
+	})
+
+	t.Run("success", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		store := mock.NewMockStoreIface(ctrl)
+		resolverDeps := deps{store:store}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps:&resolverDeps})
+
+		// what todo??
+		in := CreateTodoInput{Content:"content"}
+
+		store.EXPECT().Save(gomock.Any()).Return(nil)
+		gqltesting.RunTest(t, &gqltesting.Test{
+			Schema:         schema,
+			Query:          `
+	mutation createTodoMutation($input: CreateTodoInput!){
+		createTodo(input: $input){
+			content
+		}
+	}
+`,
+			Variables:      map[string]interface{}{
+				"input": structToMap(&in),
+			},
+			ExpectedResult: `{"createTodo":{"content":"content"}}`,
 			ExpectedErrors: nil,
 		})
 	})

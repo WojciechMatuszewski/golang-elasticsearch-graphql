@@ -6,6 +6,10 @@ import (
 	"github.com/rs/xid"
 )
 
+
+
+
+
 // CreateTodoInput represents a structure of argument passed to CreateTodo mutation.
 type CreateTodoInput struct {
 	Content string `json:"content"`
