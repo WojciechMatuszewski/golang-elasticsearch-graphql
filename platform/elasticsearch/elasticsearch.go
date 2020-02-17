@@ -33,7 +33,7 @@ func NewService(sess *session.Session, url string) (Service, error) {
 }
 
 // Index indexes given todo in elasticsearch service
-func (s *Service) Index(ctx context.Context, td todo.Todo) error {
+func (s Service) Index(ctx context.Context, td todo.Todo) error {
 	tdB, err := json.Marshal(td)
 	if err != nil {
 		return err
@@ -47,11 +47,10 @@ func (s *Service) Index(ctx context.Context, td todo.Todo) error {
 	return nil
 }
 
-func (s *Service) Search(ctx context.Context, query string) ([]todo.Todo, error) {
+func (s Service) Search(ctx context.Context, query string) ([]todo.Todo, error) {
 	var found []todo.Todo
 
-	// implement proper query here
-	res, err := s.client.Search().Index(indexKey).Query(elastic.NewTermQuery("content", query)).Do(ctx)
+	res, err := s.client.Search().Index(indexKey).Query(elastic.NewMatchPhrasePrefixQuery("content", query)).Do(ctx)
 	if err != nil {
 		return found, err
 	}

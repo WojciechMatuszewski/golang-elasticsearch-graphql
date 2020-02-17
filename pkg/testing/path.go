@@ -21,7 +21,6 @@ func GetFullPath(fromRootPath string) (string, error) {
 
 	for steps < maxSteps {
 		strs := strings.Split(currentRootPath, "/")
-
 		if len(strs) < 2 {
 			return "", errors.New("unable to locate the root path")
 		}
@@ -30,7 +29,7 @@ func GetFullPath(fromRootPath string) (string, error) {
 			return currentRootPath + fromRootPath, nil
 		}
 
-		currentRootPath = strings.Join(strs[:len(strs)-2], "/")
+		currentRootPath = strings.Join(strs[:len(strs)-1], "/")
 		steps++
 	}
 

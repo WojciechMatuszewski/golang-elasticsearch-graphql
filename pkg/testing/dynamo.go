@@ -10,17 +10,25 @@ import (
 	cfDynamo "github.com/awslabs/goformation/v4/cloudformation/dynamodb"
 )
 
+const localDynamoAddr = "http://localhost:8000"
+
+// GetLocalDynamo returns dynamoDB which uses local session
+func GetLocalDynamo() *dynamodb.DynamoDB {
+	return dynamodb.New(LocalSession(), &aws.Config{Endpoint: aws.String(localDynamoAddr)})
+}
+
 // SetupDynamoTest creates tables in DB from serverless.yml.
 func SetupDynamoTest(t *testing.T, prefix string) *dynamodb.DynamoDB {
 	t.Helper()
 
-	db := dynamodb.New(LocalSession(), &aws.Config{Endpoint: aws.String("http://localhost:8000")})
+	db := GetLocalDynamo()
 	tables := getDynamoTablesSchema()
 
 	for _, table := range tables {
 		resolvedTbName := table.TableName
 		if strings.HasPrefix(resolvedTbName, "${") {
-			resolvedTbName = strings.Split(resolvedTbName, "}.")[1]
+			parsed := strings.Split(resolvedTbName, ".")[1]
+			resolvedTbName = strings.Replace(parsed, "}", "", -1)
 		}
 
 		_, err := db.CreateTable(&dynamodb.CreateTableInput{

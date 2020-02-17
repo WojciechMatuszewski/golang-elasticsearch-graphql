@@ -11,6 +11,7 @@ if [ "" == "$(docker ps | grep dynamodb-local)" ]; then
     echo "DynamoDB started."
     docker ps
 else
-    echo "DynamoDB already running"
+    echo "DynamoDB already running, deleting tables..."
+    go run $(pwd)/tool/clear_local_dynamo.go
 fi
 

@@ -11,7 +11,7 @@ import (
 	"github.com/tj/assert"
 )
 
-const localAddr = "http://127.0.0.1:9200"
+const localAddr = "http://localhost:9200"
 
 func TestService_Index(t *testing.T) {
 	t.Parallel()
@@ -67,6 +67,7 @@ func TestService_Search(t *testing.T) {
 		}
 
 		found, err := service.Search(ctx, "ct")
+
 		assert.NoError(t, err)
 		assert.Len(t, found, 2)
 	})
