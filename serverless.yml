@@ -7,6 +7,7 @@ provider:
 
 custom:
     TODO_TABLE: ${self:service}-todo-table
+    ELASTIC_SEARCH_DOMAIN: ${self:service}-elasticsearch
 
 plugins:
     - serverless-go-plugin
@@ -24,6 +25,14 @@ functions:
                   - dynamodb:GetRecords
               Resource:
                   - !GetAtt [TodoTable, "Arn"]
+            - Effect: Allow
+              Action:
+                  - es:ESHttpPost
+                  - es:ESHttpPut
+              Resource:
+                  - !GetAtt [ElasticSearchInstance, "Arn"]
+        environment:
+            ELASTIC_SEARCH_ENDPOINT: !Join ["",["https://", !GetAtt [ElasticSearchInstance, DomainEndpoint]]]
         handler: ./functions/dbstream
         events:
             - stream:
@@ -41,8 +50,14 @@ functions:
               Resource:
                   - !GetAtt [TodoTable, "Arn"]
                   - !Join ["", [!GetAtt [TodoTable, "Arn"], "/*"]]
+            - Effect: Allow
+              Action:
+                  - es:ESHttpGet
+              Resource:
+                  - !GetAtt [ElasticSearchInstance, "Arn"]
         environment:
             TODO_TABLE: ${self:custom.TODO_TABLE}
+            ELASTIC_SEARCH_ENDPOINT: !Join ["",["https://", !GetAtt [ElasticSearchInstance, DomainEndpoint]]]
         handler: ./functions/graphql
         package:
             include:
@@ -55,3 +70,4 @@ functions:
 
 resources:
     - ${file(resources/dynamo.yml)}
+    - ${file(resources/elasticsearch.yml)}

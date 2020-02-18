@@ -1,25 +1,39 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"reflect"
 
 	"elastic-search/pkg/todo"
 	"github.com/apex/log"
+	apexJSON "github.com/apex/log/handlers/json"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodbstreams"
 )
 
-type Handler func(e events.DynamoDBEvent) error
+// Handler represents a lambda handler function
+type Handler func(ctx context.Context, e events.DynamoDBEvent) error
 
-func NewHandler() Handler {
-	return func(e events.DynamoDBEvent) error {
+// Indexer indexs a todo to elastic search service
+type Indexer interface {
+	Index(ctx context.Context, td todo.Todo) error
+}
+
+func NewHandler(indexer Indexer) Handler {
+	log.SetHandler(apexJSON.New(os.Stdout))
+	return func(ctx context.Context, e events.DynamoDBEvent) error {
 		for _, evt := range e.Records {
 			switch evt.EventName {
 			case dynamodbstreams.OperationTypeInsert:
+
+				log.WithFields(log.Fields{
+					"event": evt,
+				}).Info("stream event")
 
 				var td todo.Todo
 				err := unmarshalStreamImage(evt.Change.NewImage, &td)
@@ -29,7 +43,11 @@ func NewHandler() Handler {
 					return nil
 				}
 
-				log.WithField("todo", td).Info("unmarshalled")
+				err = indexer.Index(ctx, td)
+				if err != nil {
+					log.WithError(err).Error("error while indexing to elastic search")
+					return nil
+				}
 			}
 		}
 		return nil

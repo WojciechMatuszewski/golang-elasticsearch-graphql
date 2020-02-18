@@ -37,6 +37,7 @@ func main() {
 	}
 
 	store := todo.NewStore(os.Getenv(env.TODO_TABLE), db)
+
 	rootDeps := deps{store: store}
 
 	schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &rootDeps})
