@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"elastic-search/pkg/todo"
 	"github.com/graph-gophers/graphql-go"
 	"github.com/rs/xid"
@@ -34,6 +36,24 @@ func (r *RootResolver) GetTodo(args struct{ ID graphql.ID }) (*TodoResolver, err
 	}
 
 	return &TodoResolver{todo: td}, nil
+}
+
+type SearchTodoInput struct {
+	Query string
+}
+
+func (r *RootResolver) SearchTodo(ctx context.Context, args SearchTodoInput) ([]*TodoResolver, error) {
+	tds, err := r.deps.esService.Search(ctx, args.Query)
+	if err != nil {
+		return nil, err
+	}
+
+	resolvers := make([]*TodoResolver, len(tds))
+	for i, td := range tds {
+		resolvers[i] = &TodoResolver{todo: td}
+	}
+
+	return resolvers, nil
 }
 
 // TodoResolver resolves Todo-related graphql fields

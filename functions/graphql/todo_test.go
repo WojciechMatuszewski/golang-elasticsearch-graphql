@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -42,55 +43,34 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-
-
-func structToMap(i interface{}) (map[string]interface{}) {
-	out := map[string]interface{}{}
-	iVal := reflect.ValueOf(i).Elem()
-	for i := 0; i < iVal.NumField(); i++ {
-		f := iVal.Field(i)
-		var v string
-		switch f.Interface().(type) {
-		case string:
-			v = f.String()
-			out[v] = f.Interface()
-			break
-		default:
-			return out
-		}
-
-	}
-	return out
-}
-
 func TestRootResolver_CreateTodo(t *testing.T) {
 	t.Parallel()
 
 	t.Run("failure on saving the todo", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		store := mock.NewMockStoreIface(ctrl)
-		resolverDeps := deps{store:store}
-		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps:&resolverDeps})
+		resolverDeps := deps{store: store}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
 
-		in := CreateTodoInput{Content:"content"}
+		in := CreateTodoInput{Content: "content"}
 		store.EXPECT().Save(gomock.Any()).Return(errors.New("boom"))
 		gqltesting.RunTest(t, &gqltesting.Test{
-			Schema:         schema,
-			Query:          `
+			Schema: schema,
+			Query: `
 	mutation createTodoMutation($input: CreateTodoInput!){
 		createTodo(input: $input){
 			content
 		}
 	}
 `,
-			Variables:      map[string]interface{}{
+			Variables: map[string]interface{}{
 				"input": structToMap(&in),
 			},
 			ExpectedResult: `null`,
 			ExpectedErrors: []*graphqlerrors.QueryError{
 				{
-					Message:"boom",
-					Path:[]interface{}{"createTodo"},
+					Message:       "boom",
+					Path:          []interface{}{"createTodo"},
 					ResolverError: errors.New("boom"),
 				},
 			},
@@ -100,23 +80,23 @@ func TestRootResolver_CreateTodo(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		store := mock.NewMockStoreIface(ctrl)
-		resolverDeps := deps{store:store}
-		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps:&resolverDeps})
+		resolverDeps := deps{store: store}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
 
 		// what todo??
-		in := CreateTodoInput{Content:"content"}
+		in := CreateTodoInput{Content: "content"}
 
 		store.EXPECT().Save(gomock.Any()).Return(nil)
 		gqltesting.RunTest(t, &gqltesting.Test{
-			Schema:         schema,
-			Query:          `
+			Schema: schema,
+			Query: `
 	mutation createTodoMutation($input: CreateTodoInput!){
 		createTodo(input: $input){
 			content
 		}
 	}
 `,
-			Variables:      map[string]interface{}{
+			Variables: map[string]interface{}{
 				"input": structToMap(&in),
 			},
 			ExpectedResult: `{"createTodo":{"content":"content"}}`,
@@ -137,7 +117,7 @@ func TestRootResolver_GetTodo(t *testing.T) {
 
 		store.EXPECT().GetByID(todoID).Return(todo.Todo{}, errors.New("boom"))
 		gqltesting.RunTest(t, &gqltesting.Test{
-			Schema:         schema,
+			Schema: schema,
 			Query: `
 				query q($ID: ID!){
 					getTodo(ID: $ID){
@@ -151,11 +131,11 @@ func TestRootResolver_GetTodo(t *testing.T) {
 			},
 			ExpectedResult: `{"getTodo":null}`,
 			ExpectedErrors: []*graphqlerrors.QueryError{
-					{
-						Message:"boom",
-						Path:[]interface{}{"getTodo"},
-						ResolverError: errors.New("boom"),
-					},
+				{
+					Message:       "boom",
+					Path:          []interface{}{"getTodo"},
+					ResolverError: errors.New("boom"),
+				},
 			},
 		})
 	})
@@ -196,4 +176,125 @@ func TestRootResolver_GetTodo(t *testing.T) {
 		})
 	})
 
+}
+
+func TestRootResolver_Search(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	t.Run("success multiple found", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		esService := mock.NewMockElasticSearchServiceIface(ctrl)
+		resolverDeps := deps{esService: esService}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
+
+		outTds := []todo.Todo{
+			{
+				ID:      xid.New().String(),
+				Content: "so",
+			},
+			{
+				ID:      xid.New().String(),
+				Content: "con",
+			},
+		}
+		in := SearchTodoInput{Query: "some content"}
+
+		esService.EXPECT().Search(gomock.Any(), in.Query).Return(outTds, nil)
+		gqltesting.RunTest(t, &gqltesting.Test{
+			Context: ctx,
+			Schema:  schema,
+			Query: `
+query searchForTodos($query: String!){
+	searchTodo(query: $query) {
+		content
+}
+}
+`,
+			Variables: map[string]interface{}{
+				"query": in.Query,
+			},
+			ExpectedResult: `{"searchTodo":[{"content":"so"},{"content":"con"}]}`,
+			ExpectedErrors: nil,
+		})
+	})
+
+	t.Run("success 0 found", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		esService := mock.NewMockElasticSearchServiceIface(ctrl)
+		rootDeps := deps{esService: esService}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &rootDeps})
+
+		in := SearchTodoInput{Query: "some content"}
+
+		esService.EXPECT().Search(gomock.Any(), in.Query).Return([]todo.Todo{}, nil)
+		gqltesting.RunTest(t, &gqltesting.Test{
+			Context: ctx,
+			Schema:  schema,
+			Query: `
+query searchForTodos($query: String!){
+	searchTodo(query: $query) {
+		content
+}
+}
+`,
+			Variables: map[string]interface{}{
+				"query": in.Query,
+			},
+			ExpectedResult: `{"searchTodo": []}`,
+			ExpectedErrors: nil,
+		})
+	})
+
+	t.Run("failure", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		esService := mock.NewMockElasticSearchServiceIface(ctrl)
+		rootDeps := deps{esService: esService}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &rootDeps})
+
+		in := SearchTodoInput{Query: "some content"}
+
+		esService.EXPECT().Search(gomock.Any(), in.Query).Return([]todo.Todo{}, errors.New("boom"))
+		gqltesting.RunTest(t, &gqltesting.Test{
+			Context: ctx,
+			Schema:  schema,
+			Query: `
+query searchForTodos($query: String!){
+	searchTodo(query: $query) {
+		content
+}
+}
+`,
+			Variables: map[string]interface{}{
+				"query": in.Query,
+			},
+			ExpectedResult: `null`,
+			ExpectedErrors: []*graphqlerrors.QueryError{
+				{
+					Message:       "boom",
+					Path:          []interface{}{"searchTodo"},
+					ResolverError: errors.New("boom"),
+				},
+			},
+		})
+	})
+}
+
+func structToMap(i interface{}) map[string]interface{} {
+	out := map[string]interface{}{}
+	iVal := reflect.ValueOf(i).Elem()
+	for i := 0; i < iVal.NumField(); i++ {
+		f := iVal.Field(i)
+		var v string
+		switch f.Interface().(type) {
+		case string:
+			v = f.String()
+			out[v] = f.Interface()
+			break
+		default:
+			return out
+		}
+
+	}
+	return out
 }

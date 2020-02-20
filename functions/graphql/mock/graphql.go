@@ -5,6 +5,7 @@
 package mock
 
 import (
+	context "context"
 	todo "elastic-search/pkg/todo"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
@@ -60,4 +61,56 @@ func (m *MockStoreIface) GetByID(ID string) (todo.Todo, error) {
 func (mr *MockStoreIfaceMockRecorder) GetByID(ID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockStoreIface)(nil).GetByID), ID)
+}
+
+// MockElasticSearchServiceIface is a mock of ElasticSearchServiceIface interface
+type MockElasticSearchServiceIface struct {
+	ctrl     *gomock.Controller
+	recorder *MockElasticSearchServiceIfaceMockRecorder
+}
+
+// MockElasticSearchServiceIfaceMockRecorder is the mock recorder for MockElasticSearchServiceIface
+type MockElasticSearchServiceIfaceMockRecorder struct {
+	mock *MockElasticSearchServiceIface
+}
+
+// NewMockElasticSearchServiceIface creates a new mock instance
+func NewMockElasticSearchServiceIface(ctrl *gomock.Controller) *MockElasticSearchServiceIface {
+	mock := &MockElasticSearchServiceIface{ctrl: ctrl}
+	mock.recorder = &MockElasticSearchServiceIfaceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockElasticSearchServiceIface) EXPECT() *MockElasticSearchServiceIfaceMockRecorder {
+	return m.recorder
+}
+
+// Index mocks base method
+func (m *MockElasticSearchServiceIface) Index(ctx context.Context, td todo.Todo) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Index", ctx, td)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Index indicates an expected call of Index
+func (mr *MockElasticSearchServiceIfaceMockRecorder) Index(ctx, td interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Index", reflect.TypeOf((*MockElasticSearchServiceIface)(nil).Index), ctx, td)
+}
+
+// Search mocks base method
+func (m *MockElasticSearchServiceIface) Search(ctx context.Context, query string) ([]todo.Todo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Search", ctx, query)
+	ret0, _ := ret[0].([]todo.Todo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Search indicates an expected call of Search
+func (mr *MockElasticSearchServiceIfaceMockRecorder) Search(ctx, query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Search", reflect.TypeOf((*MockElasticSearchServiceIface)(nil).Search), ctx, query)
 }

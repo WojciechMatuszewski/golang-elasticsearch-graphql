@@ -6,6 +6,7 @@ type Mutation {
 
 type Query {
     getTodo(ID: ID!): Todo
+    searchTodo(query: String!): [Todo!]!
 }
 
 
