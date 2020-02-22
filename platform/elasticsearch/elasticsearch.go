@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"elastic-search/pkg/todo"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/olivere/elastic/v7"
 )
@@ -67,4 +68,13 @@ func (s Service) Search(ctx context.Context, query string) ([]todo.Todo, error) 
 	}
 
 	return found, nil
+}
+
+// Remove removes given item from elastic search
+func (s Service) Remove(ctx context.Context, ID string) error {
+	_, err := s.client.Delete().Index(indexKey).Id(ID).Do(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

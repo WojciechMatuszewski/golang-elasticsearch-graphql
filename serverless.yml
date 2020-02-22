@@ -1,73 +1,80 @@
 service: elasticsearch-golang-3
 
 provider:
-    name: aws
-    region: eu-central-1
-    runtime: go1.x
+  name: aws
+  region: eu-central-1
+  runtime: go1.x
 
 custom:
-    TODO_TABLE: ${self:service}-todo-table
-    ELASTIC_SEARCH_DOMAIN: ${self:service}-elasticsearch
+  TODO_TABLE: ${self:service}-todo-table
+  ELASTIC_SEARCH_DOMAIN: ${self:service}-elasticsearch
 
 plugins:
-    - serverless-go-plugin
-    - serverless-iam-roles-per-function
-
+  - serverless-go-plugin
+  - serverless-iam-roles-per-function
 
 functions:
-    dbstream:
-        iamRoleStatementsName: ${self:service}-dbstream-lambda
-        iamRoleStatements:
-            - Effect: Allow
-              Action:
-                  - dynamodb:ListStreams
-                  - dynamodb:DescribeStream
-                  - dynamodb:GetRecords
-              Resource:
-                  - !GetAtt [TodoTable, "Arn"]
-            - Effect: Allow
-              Action:
-                  - es:ESHttpPost
-                  - es:ESHttpPut
-              Resource:
-                  - !GetAtt [ElasticSearchInstance, "Arn"]
-        environment:
-            ELASTIC_SEARCH_ENDPOINT: !Join ["",["https://", !GetAtt [ElasticSearchInstance, DomainEndpoint]]]
-        handler: ./functions/dbstream
-        events:
-            - stream:
-                  type: dynamodb
-                  batchSize: 1
-                  enabled: true
-                  arn: !GetAtt [TodoTable, "StreamArn"]
-    graphql:
-        iamRoleStatementsName: ${self:service}-graphql-lambda
-        iamRoleStatements:
-            - Effect: Allow
-              Action:
-                  - dynamodb:GetItem
-                  - dynamodb:PutItem
-              Resource:
-                  - !GetAtt [TodoTable, "Arn"]
-                  - !Join ["", [!GetAtt [TodoTable, "Arn"], "/*"]]
-            - Effect: Allow
-              Action:
-                  - es:ESHttpGet
-              Resource:
-                  - !GetAtt [ElasticSearchInstance, "Arn"]
-        environment:
-            TODO_TABLE: ${self:custom.TODO_TABLE}
-            ELASTIC_SEARCH_ENDPOINT: !Join ["",["https://", !GetAtt [ElasticSearchInstance, DomainEndpoint]]]
-        handler: ./functions/graphql
-        package:
-            include:
-                - ./schema.graphql
-        events:
-            - http:
-                  path: graphql
-                  method: POST
-
+  dbstream:
+    iamRoleStatementsName: ${self:service}-dbstream-lambda
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:ListStreams
+          - dynamodb:DescribeStream
+          - dynamodb:GetRecords
+        Resource:
+          - !GetAtt [TodoTable, "Arn"]
+      - Effect: Allow
+        Action:
+          - es:ESHttpPost
+          - es:ESHttpPut
+        Resource:
+          - !GetAtt [ElasticSearchInstance, "Arn"]
+    environment:
+      ELASTIC_SEARCH_ENDPOINT:
+        !Join [
+          "",
+          ["https://", !GetAtt [ElasticSearchInstance, DomainEndpoint]],
+        ]
+    handler: ./functions/dbstream
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          enabled: true
+          arn: !GetAtt [TodoTable, "StreamArn"]
+  graphql:
+    iamRoleStatementsName: ${self:service}-graphql-lambda
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:DeleteItem
+        Resource:
+          - !GetAtt [TodoTable, "Arn"]
+          - !Join ["", [!GetAtt [TodoTable, "Arn"], "/*"]]
+      - Effect: Allow
+        Action:
+          - es:ESHttpGet
+        Resource:
+          - !GetAtt [ElasticSearchInstance, "Arn"]
+    environment:
+      TODO_TABLE: ${self:custom.TODO_TABLE}
+      ELASTIC_SEARCH_ENDPOINT:
+        !Join [
+          "",
+          ["https://", !GetAtt [ElasticSearchInstance, DomainEndpoint]],
+        ]
+    handler: ./functions/graphql
+    package:
+      include:
+        - ./schema.graphql
+    events:
+      - http:
+          path: graphql
+          method: POST
 
 resources:
-    - ${file(resources/dynamo.yml)}
-    - ${file(resources/elasticsearch.yml)}
+  - ${file(resources/dynamo.yml)}
+  - ${file(resources/elasticsearch.yml)}

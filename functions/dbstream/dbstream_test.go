@@ -11,12 +11,13 @@ import (
 	"elastic-search/functions/dbstream/mock"
 	testing2 "elastic-search/pkg/testing"
 	"elastic-search/pkg/todo"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/golang/mock/gomock"
 	"github.com/tj/assert"
 )
 
-func TestNewHandler(t *testing.T) {
+func Test_OperationInsert(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
@@ -75,6 +76,12 @@ func TestNewHandler(t *testing.T) {
 		err = handler(ctx, evt)
 		assert.NoError(t, err)
 	})
+}
+
+func Test_OperationDelete(t *testing.T) {
+	t.Parallel()
+
+	// todo
 }
 
 func getLambdaPayload(t *testing.T, fName string) events.DynamoDBEvent {

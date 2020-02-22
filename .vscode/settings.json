@@ -1,0 +1,15 @@
+{
+  "serverlessConsole.services": [
+    {
+      "type": "serverlessFramework",
+      "title": null,
+      "awsProfile": "arn:aws:sts::828006401370:assumed-role/Global-Sandbox/wojciech.matuszewski@olx.pl",
+      "cwd": "./",
+      "command": "serverless print",
+      "timeOffsetInMs": 0,
+      "envVars": [],
+      "stages": ["dev"]
+    }
+  ],
+  "serverlessConsole.autoRefreshInterval": 5000
+}

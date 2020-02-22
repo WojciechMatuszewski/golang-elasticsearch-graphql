@@ -7,6 +7,7 @@ import (
 	testing2 "elastic-search/pkg/testing"
 	"elastic-search/pkg/todo"
 	"elastic-search/platform/elasticsearch"
+
 	"github.com/rs/xid"
 	"github.com/tj/assert"
 )
@@ -70,5 +71,42 @@ func TestService_Search(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Len(t, found, 2)
+	})
+}
+
+func TestService_Remove(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	sess := testing2.LocalSession()
+
+	t.Run("success", func(t *testing.T) {
+		service, err := elasticsearch.NewService(sess, localAddr)
+		if err != nil {
+			t.Fatalf(err.Error(), nil)
+		}
+
+		tdID := xid.New().String()
+		tdIn := todo.Todo{
+			Content: "some content",
+			ID:      tdID,
+		}
+
+		err = service.Index(ctx, tdIn)
+		if err != nil {
+			t.Fatalf(err.Error(), nil)
+		}
+
+		err = service.Remove(ctx, tdID)
+		assert.NoError(t, err)
+	})
+
+	t.Run("with non-existing item", func(t *testing.T) {
+		service, err := elasticsearch.NewService(sess, localAddr)
+		if err != nil {
+			t.Fatalf(err.Error(), nil)
+		}
+
+		err = service.Remove(ctx, xid.New().String())
+		assert.Error(t, err, nil)
 	})
 }
