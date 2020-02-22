@@ -21,28 +21,36 @@ import (
 type Handler func(ctx context.Context, e events.DynamoDBEvent) error
 
 // Indexer indexs a todo to elastic search service
-type Indexer interface {
+type IndexerRemover interface {
 	Index(ctx context.Context, td todo.Todo) error
+	Remove(ctx context.Context, ID string) error
 }
 
 // NewHandler is the function responsible for creating dbstream lambda handler
-func NewHandler(indexer Indexer) Handler {
+func NewHandler(indexerRemover IndexerRemover) Handler {
 	log.SetHandler(apexJSON.New(os.Stdout))
 	return func(ctx context.Context, e events.DynamoDBEvent) error {
 		for _, evt := range e.Records {
+			log.WithField("event", evt).Info("incoming event")
 			switch evt.EventName {
-
 			case dynamodbstreams.OperationTypeRemove:
-				log.WithFields(log.Fields{
-					"event": evt,
-				}).Info("operation remove!")
-				break
+				log.Info(dynamodbstreams.OperationTypeRemove)
+
+				var td todo.Todo
+				err := unmarshalStreamImage(evt.Change.OldImage, &td)
+				if err != nil {
+					log.WithError(err).Error("error while unmarshaling stream image")
+					return nil
+				}
+
+				err = indexerRemover.Remove(ctx, td.ID)
+				if err != nil {
+					log.WithError(err).Error("error while removing from es")
+					return nil
+				}
 
 			case dynamodbstreams.OperationTypeInsert:
-
-				log.WithFields(log.Fields{
-					"event": evt,
-				}).Info("stream event")
+				log.Info(dynamodbstreams.OperationTypeInsert)
 
 				var td todo.Todo
 				err := unmarshalStreamImage(evt.Change.NewImage, &td)
@@ -52,7 +60,7 @@ func NewHandler(indexer Indexer) Handler {
 					return nil
 				}
 
-				err = indexer.Index(ctx, td)
+				err = indexerRemover.Index(ctx, td)
 				if err != nil {
 					log.WithError(err).Error("error while indexing to elastic search")
 					return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -24,7 +25,9 @@ func Test_OperationInsert(t *testing.T) {
 	t.Run("success single", func(t *testing.T) {
 		evt := getLambdaPayload(t, "single.json")
 		ctrl := gomock.NewController(t)
-		indexer := mock.NewMockIndexer(ctrl)
+		defer ctrl.Finish()
+
+		indexer := mock.NewMockIndexerRemover(ctrl)
 		handler := NewHandler(indexer)
 
 		var inTd todo.Todo
@@ -34,7 +37,6 @@ func Test_OperationInsert(t *testing.T) {
 		}
 
 		indexer.EXPECT().Index(ctx, inTd).Return(nil)
-
 		err = handler(ctx, evt)
 		assert.NoError(t, err)
 	})
@@ -42,7 +44,9 @@ func Test_OperationInsert(t *testing.T) {
 	t.Run("success multiple", func(t *testing.T) {
 		evt := getLambdaPayload(t, "multiple.json")
 		ctrl := gomock.NewController(t)
-		indexer := mock.NewMockIndexer(ctrl)
+		defer ctrl.Finish()
+
+		indexer := mock.NewMockIndexerRemover(ctrl)
 		handler := NewHandler(indexer)
 
 		for _, dbEvt := range evt.Records {
@@ -62,7 +66,9 @@ func Test_OperationInsert(t *testing.T) {
 	t.Run("indexer failure", func(t *testing.T) {
 		evt := getLambdaPayload(t, "multiple.json")
 		ctrl := gomock.NewController(t)
-		indexer := mock.NewMockIndexer(ctrl)
+		defer ctrl.Finish()
+
+		indexer := mock.NewMockIndexerRemover(ctrl)
 		handler := NewHandler(indexer)
 
 		var inTd todo.Todo
@@ -80,7 +86,47 @@ func Test_OperationInsert(t *testing.T) {
 
 func Test_OperationDelete(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 
+	t.Run("success", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		evt := getLambdaPayload(t, "single-remove.json")
+		indexerRemover := mock.NewMockIndexerRemover(ctrl)
+		handler := NewHandler(indexerRemover)
+
+		var inTd todo.Todo
+		err := unmarshalStreamImage(evt.Records[0].Change.OldImage, &inTd)
+		if err != nil {
+			fmt.Printf("im here")
+			t.Fatalf(err.Error())
+		}
+
+		indexerRemover.EXPECT().Remove(ctx, inTd.ID).Return(nil)
+		err = handler(ctx, evt)
+		assert.NoError(t, err)
+	})
+
+	t.Run("indexer failure", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		evt := getLambdaPayload(t, "single-remove.json")
+		indexerRemover := mock.NewMockIndexerRemover(ctrl)
+		handler := NewHandler(indexerRemover)
+
+		var inTd todo.Todo
+		err := unmarshalStreamImage(evt.Records[0].Change.OldImage, &inTd)
+		if err != nil {
+			t.Fatalf(err.Error(), nil)
+		}
+
+		indexerRemover.EXPECT().Remove(ctx, inTd.ID).Return(errors.New("boom"))
+
+		err = handler(ctx, evt)
+		assert.NoError(t, err, nil)
+	})
 	// todo
 }
 

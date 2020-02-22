@@ -11,31 +11,31 @@ import (
 	reflect "reflect"
 )
 
-// MockIndexer is a mock of Indexer interface
-type MockIndexer struct {
+// MockIndexerRemover is a mock of IndexerRemover interface
+type MockIndexerRemover struct {
 	ctrl     *gomock.Controller
-	recorder *MockIndexerMockRecorder
+	recorder *MockIndexerRemoverMockRecorder
 }
 
-// MockIndexerMockRecorder is the mock recorder for MockIndexer
-type MockIndexerMockRecorder struct {
-	mock *MockIndexer
+// MockIndexerRemoverMockRecorder is the mock recorder for MockIndexerRemover
+type MockIndexerRemoverMockRecorder struct {
+	mock *MockIndexerRemover
 }
 
-// NewMockIndexer creates a new mock instance
-func NewMockIndexer(ctrl *gomock.Controller) *MockIndexer {
-	mock := &MockIndexer{ctrl: ctrl}
-	mock.recorder = &MockIndexerMockRecorder{mock}
+// NewMockIndexerRemover creates a new mock instance
+func NewMockIndexerRemover(ctrl *gomock.Controller) *MockIndexerRemover {
+	mock := &MockIndexerRemover{ctrl: ctrl}
+	mock.recorder = &MockIndexerRemoverMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockIndexer) EXPECT() *MockIndexerMockRecorder {
+func (m *MockIndexerRemover) EXPECT() *MockIndexerRemoverMockRecorder {
 	return m.recorder
 }
 
 // Index mocks base method
-func (m *MockIndexer) Index(ctx context.Context, td todo.Todo) error {
+func (m *MockIndexerRemover) Index(ctx context.Context, td todo.Todo) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Index", ctx, td)
 	ret0, _ := ret[0].(error)
@@ -43,7 +43,21 @@ func (m *MockIndexer) Index(ctx context.Context, td todo.Todo) error {
 }
 
 // Index indicates an expected call of Index
-func (mr *MockIndexerMockRecorder) Index(ctx, td interface{}) *gomock.Call {
+func (mr *MockIndexerRemoverMockRecorder) Index(ctx, td interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Index", reflect.TypeOf((*MockIndexer)(nil).Index), ctx, td)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Index", reflect.TypeOf((*MockIndexerRemover)(nil).Index), ctx, td)
+}
+
+// Remove mocks base method
+func (m *MockIndexerRemover) Remove(ctx context.Context, ID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Remove", ctx, ID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Remove indicates an expected call of Remove
+func (mr *MockIndexerRemoverMockRecorder) Remove(ctx, ID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockIndexerRemover)(nil).Remove), ctx, ID)
 }
