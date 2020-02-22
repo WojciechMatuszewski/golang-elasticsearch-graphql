@@ -1,3 +1,4 @@
+// Package elasticsearch implements methods for interacting with elastic search service
 package elasticsearch
 
 import (
@@ -7,8 +8,10 @@ import (
 
 	"elastic-search/pkg/todo"
 
+	"github.com/apex/log"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/olivere/elastic/v7"
+	elasticAws "github.com/olivere/elastic/v7/aws/v4"
 )
 
 const indexKey = "todo"
@@ -20,16 +23,20 @@ type Service struct {
 
 // NewService returns elasticsearch service
 func NewService(sess *session.Session, url string) (Service, error) {
-	//signingClient := elasticAws.NewV4SigningClient(sess.Config.Credentials, "local")
+	signingClient := elasticAws.NewV4SigningClient(sess.Config.Credentials, "eu-central-1")
 
 	client, err := elastic.NewClient(
 		elastic.SetURL(url),
 		elastic.SetSniff(false),
 		elastic.SetHealthcheck(false),
+		elastic.SetHttpClient(signingClient),
 	)
 	if err != nil {
+		log.WithError(err).Error("could not connect to es")
 		return Service{}, err
 	}
+
+	log.Info("connected to es service!")
 
 	return Service{client: client}, nil
 }

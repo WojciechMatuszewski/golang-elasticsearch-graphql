@@ -9,6 +9,8 @@ import (
 
 	"elastic-search/pkg/env"
 	"elastic-search/pkg/todo"
+	"elastic-search/platform/elasticsearch"
+
 	"github.com/apex/gateway"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -37,8 +39,12 @@ func main() {
 	}
 
 	store := todo.NewStore(os.Getenv(env.TODO_TABLE), db)
+	esService, err := elasticsearch.NewService(sess, os.Getenv(env.ELASTIC_SEARCH_ENDPOINT))
+	if err != nil {
+		panic(err.Error())
+	}
 
-	rootDeps := deps{store: store}
+	rootDeps := deps{store: store, esService: esService}
 
 	schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &rootDeps})
 

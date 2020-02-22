@@ -5,6 +5,7 @@ import (
 
 	"elastic-search/pkg/env"
 	"elastic-search/platform/elasticsearch"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 )
@@ -18,6 +19,5 @@ func main() {
 	}
 
 	handler := NewHandler(indexer)
-
 	lambda.Start(handler)
 }

@@ -1,4 +1,4 @@
-service: elasticsearch-golang-3
+service: elasticsearch-golang-4
 
 provider:
   name: aws
@@ -29,7 +29,8 @@ functions:
           - es:ESHttpPost
           - es:ESHttpPut
         Resource:
-          - !GetAtt [ElasticSearchInstance, "Arn"]
+          - !GetAtt [ElasticSearchInstance, "DomainArn"]
+          - !Join ["", [!GetAtt [ElasticSearchInstance, "DomainArn"], "/*"]]
     environment:
       ELASTIC_SEARCH_ENDPOINT:
         !Join [
@@ -57,8 +58,11 @@ functions:
       - Effect: Allow
         Action:
           - es:ESHttpGet
+          - es:ESHttpPost
+          - es:ESHttpPut
         Resource:
-          - !GetAtt [ElasticSearchInstance, "Arn"]
+          - !GetAtt [ElasticSearchInstance, "DomainArn"]
+          - !Join ["", [!GetAtt [ElasticSearchInstance, "DomainArn"], "/*"]]
     environment:
       TODO_TABLE: ${self:custom.TODO_TABLE}
       ELASTIC_SEARCH_ENDPOINT:
