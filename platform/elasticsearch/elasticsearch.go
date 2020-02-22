@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"elastic-search/pkg/todo"
 
@@ -48,13 +49,17 @@ func (s Service) Index(ctx context.Context, td todo.Todo) error {
 	return nil
 }
 
+// Search does something
 func (s Service) Search(ctx context.Context, query string) ([]todo.Todo, error) {
 	var found []todo.Todo
+	fmt.Println(query)
 
-	res, err := s.client.Search().Index(indexKey).Query(elastic.NewMatchPhrasePrefixQuery("content", query)).Do(ctx)
+	res, err := s.client.Search().Index(indexKey).Query(elastic.NewMatchQuery("content", query).Fuzziness("2")).Do(ctx)
 	if err != nil {
 		return found, err
 	}
+
+	fmt.Println(res.Hits)
 
 	for _, hit := range res.Hits.Hits {
 		var td todo.Todo

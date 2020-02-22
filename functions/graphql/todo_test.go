@@ -49,6 +49,7 @@ func TestRootResolver_CreateTodo(t *testing.T) {
 
 	t.Run("failure on saving the todo", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store: store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
@@ -80,6 +81,7 @@ func TestRootResolver_CreateTodo(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store: store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
@@ -111,6 +113,7 @@ func TestRootResolver_GetTodo(t *testing.T) {
 
 	t.Run("failure on getByID error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store: store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
@@ -143,6 +146,7 @@ func TestRootResolver_GetTodo(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store: store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
@@ -185,6 +189,7 @@ func TestRootResolver_Search(t *testing.T) {
 
 	t.Run("success multiple found", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		esService := mock.NewMockElasticSearchServiceIface(ctrl)
 		resolverDeps := deps{esService: esService}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
@@ -222,6 +227,7 @@ query searchForTodos($query: String!){
 
 	t.Run("success 0 found", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		esService := mock.NewMockElasticSearchServiceIface(ctrl)
 		rootDeps := deps{esService: esService}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &rootDeps})
@@ -249,6 +255,7 @@ query searchForTodos($query: String!){
 
 	t.Run("failure", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		esService := mock.NewMockElasticSearchServiceIface(ctrl)
 		rootDeps := deps{esService: esService}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &rootDeps})
@@ -286,6 +293,7 @@ func TestRootResolver_RemoveTodo(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store: store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
@@ -309,6 +317,7 @@ func TestRootResolver_RemoveTodo(t *testing.T) {
 
 	t.Run("failure", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 		store := mock.NewMockStoreIface(ctrl)
 		resolverDeps := deps{store: store}
 		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})

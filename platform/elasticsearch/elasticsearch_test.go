@@ -3,6 +3,7 @@ package elasticsearch_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	testing2 "elastic-search/pkg/testing"
 	"elastic-search/pkg/todo"
@@ -46,15 +47,16 @@ func TestService_Search(t *testing.T) {
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
+		prefix := xid.New().String()
 
 		tdin1 := todo.Todo{
 			ID:      xid.New().String(),
-			Content: "ct1",
+			Content: prefix + "ct1",
 		}
 
 		tdin2 := todo.Todo{
 			ID:      xid.New().String(),
-			Content: "ct2",
+			Content: prefix + "ct2",
 		}
 
 		err = service.Index(ctx, tdin1)
@@ -67,7 +69,9 @@ func TestService_Search(t *testing.T) {
 			t.Fatalf(err.Error())
 		}
 
-		found, err := service.Search(ctx, "ct")
+		time.Sleep(1 * time.Second)
+
+		found, err := service.Search(ctx, prefix+"ct")
 
 		assert.NoError(t, err)
 		assert.Len(t, found, 2)
