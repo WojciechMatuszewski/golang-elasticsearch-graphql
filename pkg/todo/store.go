@@ -4,8 +4,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
-
 
 // Store represents TodoStore
 type Store struct {
@@ -63,5 +63,30 @@ func (s *Store) Save(todo Todo) error {
 		return err
 	}
 
+	return nil
+}
+
+// Remove removes given todo from the database
+func (s *Store) Remove(ID string) error {
+	cond := expression.AttributeExists(expression.Name("ID"))
+	expr, err := expression.NewBuilder().WithCondition(cond).Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.DeleteItem(&dynamodb.DeleteItemInput{
+		TableName: aws.String(s.tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ID": {
+				S: aws.String(ID),
+			},
+		},
+		ConditionExpression:       expr.Condition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }

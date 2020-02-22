@@ -14,6 +14,7 @@ type RootResolver struct {
 type StoreIface interface {
 	Save(todo todo.Todo) error
 	GetByID(ID string) (todo.Todo, error)
+	Remove(ID string) error
 }
 
 // ElasticSearchServiceIface is an interface which represents the Elastic Search service

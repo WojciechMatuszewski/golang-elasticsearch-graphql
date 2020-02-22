@@ -8,6 +8,7 @@ import (
 	"reflect"
 
 	"elastic-search/pkg/todo"
+
 	"github.com/apex/log"
 	apexJSON "github.com/apex/log/handlers/json"
 	"github.com/aws/aws-lambda-go/events"
@@ -24,11 +25,19 @@ type Indexer interface {
 	Index(ctx context.Context, td todo.Todo) error
 }
 
+// NewHandler is the function responsible for creating dbstream lambda handler
 func NewHandler(indexer Indexer) Handler {
 	log.SetHandler(apexJSON.New(os.Stdout))
 	return func(ctx context.Context, e events.DynamoDBEvent) error {
 		for _, evt := range e.Records {
 			switch evt.EventName {
+
+			case dynamodbstreams.OperationTypeRemove:
+				log.WithFields(log.Fields{
+					"event": evt,
+				}).Info("operation remove!")
+				break
+
 			case dynamodbstreams.OperationTypeInsert:
 
 				log.WithFields(log.Fields{

@@ -63,6 +63,20 @@ func (mr *MockStoreIfaceMockRecorder) GetByID(ID interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockStoreIface)(nil).GetByID), ID)
 }
 
+// Remove mocks base method
+func (m *MockStoreIface) Remove(ID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Remove", ID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Remove indicates an expected call of Remove
+func (mr *MockStoreIfaceMockRecorder) Remove(ID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockStoreIface)(nil).Remove), ID)
+}
+
 // MockElasticSearchServiceIface is a mock of ElasticSearchServiceIface interface
 type MockElasticSearchServiceIface struct {
 	ctrl     *gomock.Controller

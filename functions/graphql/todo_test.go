@@ -12,6 +12,7 @@ import (
 	"elastic-search/pkg/env"
 	testing2 "elastic-search/pkg/testing"
 	"elastic-search/pkg/todo"
+
 	"github.com/golang/mock/gomock"
 	"github.com/graph-gophers/graphql-go"
 	graphqlerrors "github.com/graph-gophers/graphql-go/errors"
@@ -273,6 +274,64 @@ query searchForTodos($query: String!){
 				{
 					Message:       "boom",
 					Path:          []interface{}{"searchTodo"},
+					ResolverError: errors.New("boom"),
+				},
+			},
+		})
+	})
+}
+
+func TestRootResolver_RemoveTodo(t *testing.T) {
+	t.Parallel()
+
+	t.Run("success", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		store := mock.NewMockStoreIface(ctrl)
+		resolverDeps := deps{store: store}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
+
+		inID := xid.New().String()
+		store.EXPECT().Remove(inID).Return(nil)
+		gqltesting.RunTest(t, &gqltesting.Test{
+			Schema: schema,
+			Query: `
+				mutation RemoveIDMutation($ID: ID!) {
+					removeTodo(ID: $ID)
+				}
+			`,
+			Variables: map[string]interface{}{
+				"ID": inID,
+			},
+			ExpectedErrors: nil,
+			ExpectedResult: `{"removeTodo":true}`,
+		})
+	})
+
+	t.Run("failure", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		store := mock.NewMockStoreIface(ctrl)
+		resolverDeps := deps{store: store}
+		schema := graphql.MustParseSchema(string(schemaB), &RootResolver{deps: &resolverDeps})
+
+		inID := xid.New().String()
+		store.EXPECT().Remove(inID).Return(errors.New("boom"))
+		gqltesting.RunTest(t, &gqltesting.Test{
+			Context: nil,
+			Schema:  schema,
+			Query: `
+mutation removeTodoMutation($ID: ID!){
+	removeTodo(ID: $ID)
+}
+`,
+			OperationName: "",
+			Variables: map[string]interface{}{
+				"ID": inID,
+			},
+			ExpectedResult: `{"removeTodo":null}`,
+			ExpectedErrors: []*graphqlerrors.QueryError{
+				{
+					Message:       "boom",
+					Path:          []interface{}{"removeTodo"},
 					ResolverError: errors.New("boom"),
 				},
 			},

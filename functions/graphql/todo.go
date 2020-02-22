@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"elastic-search/pkg/todo"
+
 	"github.com/graph-gophers/graphql-go"
 	"github.com/rs/xid"
 )
@@ -54,6 +55,21 @@ func (r *RootResolver) SearchTodo(ctx context.Context, args SearchTodoInput) ([]
 	}
 
 	return resolvers, nil
+}
+
+type RemoveTodoInput struct {
+	ID graphql.ID
+}
+
+func (r *RootResolver) RemoveTodo(ctx context.Context, args RemoveTodoInput) (*bool, error) {
+	failure := false
+	success := true
+	err := r.deps.store.Remove(string(args.ID))
+	if err != nil {
+		return &failure, err
+	}
+
+	return &success, nil
 }
 
 // TodoResolver resolves Todo-related graphql fields
